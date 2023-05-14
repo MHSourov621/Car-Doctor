@@ -1,10 +1,15 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import logo from "../../assets/images/login/login.svg"
 import { useContext } from "react";
 import { AuthContext } from "../provider/AuthProvider";
+import SocialLogin from "../Shared/SocialLogin/SocialLogin";
 
 const Login = () => {
     const {loginUser} = useContext(AuthContext);
+
+    const location = useLocation();
+    const navigate = useNavigate();
+    const from = location.state?.from?.pathname || "/";
 
     const handleSubmit = (event) => {
         event.preventDefault();
@@ -15,12 +20,16 @@ const Login = () => {
         loginUser(email, password)
         .then(result => {
             const user = result.user;
+            
             console.log(user);
+            navigate(from , {replace: true})
+            
         })
         .catch(error => {
             console.log(error.message);
         })
     }
+
     return (
         <div className="hero min-h-screen bg-base-200">
             <div className="hero-content flex-col lg:flex-row">
@@ -50,6 +59,7 @@ const Login = () => {
                                 <input className="btn bg-orange-500" type="submit" value="Login" />
                             </div>
                             <p className="mt-4">New to Car Doctor? <Link className="underline text-orange-500" to="/signUp">Sign Up</Link></p>
+                            <SocialLogin></SocialLogin>
                         </form>
                     </div>
                 </div>

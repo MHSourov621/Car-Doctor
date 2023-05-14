@@ -1,5 +1,5 @@
 import { createContext, useEffect, useState } from "react";
-import { createUserWithEmailAndPassword, getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { GoogleAuthProvider, createUserWithEmailAndPassword, getAuth, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, signOut } from "firebase/auth";
 import app from "../../firebase/Firebase";
 
 
@@ -9,6 +9,7 @@ const auth = getAuth(app)
 const AuthProvider = ({children}) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const googleProvider = new GoogleAuthProvider()
 
     const createUser = (email, password) => {
         setLoading(true)
@@ -19,6 +20,11 @@ const AuthProvider = ({children}) => {
         return signInWithEmailAndPassword(auth, email, password);
     }
 
+    const googleLogin = () => {
+        setLoading(true)
+        return signInWithPopup(auth, googleProvider)
+    }
+
     const logout = () => {
         return signOut(auth);
     }
@@ -27,7 +33,28 @@ const AuthProvider = ({children}) => {
         const unsubscribe = onAuthStateChanged(auth, currentUser => {
             setUser(currentUser);
             console.log(currentUser);
-            setLoading(false)
+            setLoading(false);
+            if(currentUser && currentUser.email){
+                const loggedUser = {
+                    email: currentUser.email
+                }
+                fetch('https://car-doctor-server-mhsourov621.vercel.app/jwt', {
+                method: "POST",
+                headers: {
+                    'content-type' : 'application/json'
+                },
+                body: JSON.stringify(loggedUser)
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log("jwt response",data);
+                localStorage.setItem('car-access-token', data.token)
+                
+            })
+            }
+            else{
+                localStorage.removeItem('car-access-token');
+            }
         })
         return () => {
             setLoading(true)
@@ -41,6 +68,7 @@ const AuthProvider = ({children}) => {
         loading,
         createUser,
         loginUser,
+        googleLogin,
         logout
     }
     return (
